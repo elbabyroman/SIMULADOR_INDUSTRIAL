@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Avanzado de Calidad Industrial</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .registration {
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .option {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+        .selected {
+            background-color: #e3f2fd;
+        }
+        .correct {
+            background-color: #c8e6c9;
+        }
+        .incorrect {
+            background-color: #ffcdd2;
+        }
+        .scoreboard {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .case-description {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="registration" id="registrationForm">
+            <h2>Registro de Participante</h2>
+            <input type="text" id="playerName" placeholder="Ingresa tu nombre">
+            <button onclick="registerPlayer()">Comenzar Quiz</button>
+        </div>
+
+        <div id="quizContainer" style="display: none;">
+            <h2>Casos Avanzados de Calidad Industrial</h2>
+            <div id="questions"></div>
+            <button id="submitButton" onclick="submitAnswer()" disabled>Siguiente Pregunta</button>
+        </div>
+
+        <div class="scoreboard">
+            <h2>Tabla de Puntuaciones</h2>
+            <table id="scoreboardTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Puntuación</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboardBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const cases = [
+            {
+                question: `Una empresa farmacéutica presenta una desviación en su proceso de fabricación de tabletas. El análisis de capacidad del proceso muestra un Cpk de 0.8, un incremento en la variabilidad del peso de las tabletas, y los gráficos de control muestran puntos fuera de los límites de control. Los datos de la última semana indican:
+                - Media del peso: 325mg (especificación: 320-330mg)
+                - Desviación estándar: 5mg
+                - Puntos fuera de control: 8 de 100
+                ¿Cuál es el enfoque más adecuado para resolver esta situación?`,
+                options: [
+                    "Implementar un estudio MSA (Measurement System Analysis), realizar un DOE (Design of Experiments) para identificar factores críticos, y ajustar los parámetros del proceso usando metodología Six Sigma",
+                    "Aumentar la frecuencia de muestreo y ajustar manualmente el proceso cada vez que se detecte una desviación",
+                    "Ampliar los límites de especificación para reducir el número de rechazos",
+                    "Reemplazar el equipo de producción por uno nuevo sin análisis previo"
+                ],
+                correct: 0
+            },
+            {
+                question: `En una planta de semiconductores, se está implementando un nuevo proceso de grabado de obleas. Los datos iniciales muestran:
+                - Yield actual: 82%
+                - DPMO (Defectos Por Millón de Oportunidades): 15,000
+                - OEE (Overall Equipment Effectiveness): 65%
+                Se observa una correlación entre la temperatura del proceso y los defectos, pero los sensores muestran lecturas inconsistentes. ¿Cuál es la estrategia más efectiva?`,
+                options: [
+                    "Realizar un análisis R&R (Repeatability & Reproducibility) de los sensores, implementar control estadístico multinivel y desarrollar un sistema de control feedforward/feedback",
+                    "Aumentar la temperatura del proceso en un 10% para compensar las variaciones",
+                    "Implementar inspección visual 100% al final del proceso",
+                    "Reducir la velocidad del proceso en un 50% para mejorar el yield"
+                ],
+                correct: 0
+            },
+            {
+                question: `Una empresa automotriz está experimentando un aumento en las reclamaciones de garantía relacionadas con el sistema de frenos. El análisis de datos muestra:
+                - Tasa de fallos: 3.5% (objetivo: <1%)
+                - Tiempo medio entre fallos: 8,000 km
+                - Costos de garantía: +45% vs año anterior
+                Los fallos no muestran un patrón claro y ocurren en diferentes lotes de producción. ¿Qué metodología debería aplicarse?`,
+                options: [
+                    "Implementar DMAIC con análisis de Weibull para confiabilidad, realizar FMEA actualizado y establecer un sistema Poka-Yoke en puntos críticos del proceso",
+                    "Realizar una campaña de recall preventivo de todos los vehículos producidos en el último año",
+                    "Cambiar los proveedores de componentes sin análisis previo",
+                    "Incrementar los períodos de prueba final en un 200%"
+                ],
+                correct: 0
+            },
+            {
+                question: `En una planta de procesamiento de alimentos, se implementó un nuevo sistema HACCP, pero después de tres meses:
+                - Se detectaron 5 desviaciones críticas en PCCs
+                - El tiempo de respuesta promedio a alertas es de 45 minutos
+                - La trazabilidad de lotes muestra gaps en 15% de los casos
+                - Las verificaciones de prerrequisitos están incompletas en un 25%
+                ¿Cuál es la acción más apropiada?`,
+                options: [
+                    "Realizar un análisis de gap contra ISO 22000, implementar un sistema FSMS integrado con IoT para monitoreo en tiempo real, y establecer un programa de verificación basado en riesgos",
+                    "Duplicar la frecuencia de todas las verificaciones y controles",
+                    "Tercerizar el control de calidad a una empresa externa",
+                    "Implementar un sistema de documentación más estricto sin revisar los controles actuales"
+                ],
+                correct: 0
+            },
+            {
+                question: `Una empresa de dispositivos médicos está enfrentando problemas de validación en su proceso de esterilización. Los datos muestran:
+                - Nivel de garantía de esterilidad (SAL): 10^-5 (objetivo: 10^-6)
+                - Variabilidad en la distribución de temperatura: ±3°C
+                - Penetración inconsistente del agente esterilizante
+                - Indicadores biológicos: 0.5% positivos post-proceso
+                ¿Cuál es el enfoque correcto para resolver esta situación?`,
+                options: [
+                    "Realizar una validación IQ/OQ/PQ completa, implementar un sistema PAT (Process Analytical Technology) y desarrollar un protocolo de validación concurrente con mapeo térmico 3D",
+                    "Aumentar el tiempo de exposición y la concentración del agente esterilizante",
+                    "Cambiar a un método de esterilización diferente sin validación previa",
+                    "Agregar un segundo ciclo de esterilización a todos los lotes"
+                ],
+                correct: 0
+            }
+        ];
+
+        let currentPlayer = '';
+        let currentQuestion = 0;
+        let score = 0;
+        let scores = [];
+        let selectedOption = null;
+
+        function registerPlayer() {
+            const nameInput = document.getElementById('playerName');
+            if (nameInput.value.trim() === '') {
+                alert('Por favor ingresa un nombre');
+                return;
+            }
+            currentPlayer = nameInput.value;
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= cases.length) {
+                finishQuiz();
+                return;
+            }
+
+            const questionDiv = document.getElementById('questions');
+            const case_study = cases[currentQuestion];
+            
+            questionDiv.innerHTML = `
+                <div class="question active">
+                    <h3>Caso ${currentQuestion + 1}:</h3>
+                    <div class="case-description">
+                        ${case_study.question}
+                    </div>
+                    ${case_study.options.map((option, index) => `
+                        <div class="option" onclick="selectOption(${index})">${option}</div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('submitButton').disabled = true;
+            selectedOption = null;
+        }
+
+        function selectOption(index) {
+            selectedOption = index;
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => option.classList.remove('selected'));
+            options[index].classList.add('selected');
+            document.getElementById('submitButton').disabled = false;
+        }
+
+        function submitAnswer() {
+            const correctAnswer = cases[currentQuestion].correct;
+            const options = document.querySelectorAll('.option');
+            
+            options[correctAnswer].classList.add('correct');
+            if (selectedOption !== correctAnswer) {
+                options[selectedOption].classList.add('incorrect');
+            } else {
+                score++;
+            }
+
+            document.getElementById('submitButton').disabled = true;
+            
+            setTimeout(() => {
+                currentQuestion++;
+                showQuestion();
+            }, 2000);
+        }
+
+        function finishQuiz() {
+            scores.push({ name: currentPlayer, score: score });
+            scores.sort((a, b) => b.score - a.score);
+            updateScoreboard();
+            
+            document.getElementById('questions').innerHTML = `
+                <h3>¡Quiz completado!</h3>
+                <p>Tu puntuación final: ${score} de ${cases.length}</p>
+            `;
+            document.getElementById('submitButton').style.display = 'none';
+        }
+
+        function updateScoreboard() {
+            const tbody = document.getElementById('scoreboardBody');
+            tbody.innerHTML = scores.map(player => `
+                <tr>
+                    <td>${player.name}</td>
+                    <td>${player.score} de ${cases.length}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
